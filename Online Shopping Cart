@@ -1,0 +1,136 @@
+import java.util.*;
+
+class Product {
+    private String id;
+    private String name;
+    private double price;
+
+    public Product(String id, String name, double price) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+    }
+
+    // Getters and setters
+}
+
+class CartItem {
+    private Product product;
+    private int quantity;
+
+    public CartItem(Product product, int quantity) {
+        this.product = product;
+        this.quantity = quantity;
+    }
+
+    // Getters and setters
+}
+
+class ShoppingCart {
+    private List<CartItem> items;
+
+    public ShoppingCart() {
+        items = new ArrayList<>();
+    }
+
+    public void addItem(Product product, int quantity) {
+        for (CartItem item : items) {
+            if (item.getProduct().getId().equals(product.getId())) {
+                item.setQuantity(item.getQuantity() + quantity);
+                return;
+            }
+        }
+        items.add(new CartItem(product, quantity));
+    }
+
+    public void removeItem(String productId) {
+        items.removeIf(item -> item.getProduct().getId().equals(productId));
+    }
+
+    public double getTotalPrice() {
+        double total = 0;
+        for (CartItem item : items) {
+            total += item.getProduct().getPrice() * item.getQuantity();
+        }
+        return total;
+    }
+
+    public void displayCart() {
+        System.out.println("Shopping Cart:");
+        for (CartItem item : items) {
+            Product product = item.getProduct();
+            System.out.println("Product: " + product.getName());
+            System.out.println("Price: " + product.getPrice());
+            System.out.println("Quantity: " + item.getQuantity());
+            System.out.println("--------------------");
+        }
+        System.out.println("Total Price: " + getTotalPrice());
+    }
+}
+
+public class OnlineShoppingCartSystem {
+    public static void main(String[] args) {
+        // Create some sample products
+        Product product1 = new Product("1", "Product 1", 9.99);
+        Product product2 = new Product("2", "Product 2", 19.99);
+
+        // Create a shopping cart
+        ShoppingCart cart = new ShoppingCart();
+
+        // Add items to the cart
+        cart.addItem(product1, 2);
+        cart.addItem(product2, 1);
+
+        // Display the cart
+        cart.displayCart();
+
+        // Remove an item from the cart
+        cart.removeItem("1");
+
+        // Display the updated cart
+        cart.displayCart();
+    }
+}
+
+
+
+
+1. User Interface (UI):
+   - The UI allows users to browse products, add items to the cart, and proceed to checkout.
+   - It should provide features like search, filtering, sorting, and product details display.
+   - The UI communicates with the backend services through APIs.
+
+2. Backend Services:
+   - Authentication and Authorization: Handle user authentication and authorization to ensure secure access to the system.
+   - Product Catalog Management: Maintain a catalog of available products, including details such as name, price, description, and availability.
+   - Cart Management: Track the user's cart items, quantities, and pricing information. Store the cart data temporarily until checkout.
+   - Inventory Management: Track the availability of products and update the inventory when a purchase is made.
+   - Pricing and Promotions: Calculate the pricing based on product prices, quantities, discounts, and promotions.
+   - Order Management: Process orders, handle payment integration, and generate order confirmation.
+   - User Management: Store and manage user information, including addresses, payment methods, and order history.
+
+3. Data Storage:
+   - Product Catalog Database: Store product information such as name, price, description, and availability.
+   - Cart Database: Store temporary cart information, including items, quantities, and associated pricing details.
+   - User Database: Store user information, including addresses, payment methods, and order history.
+
+4. Caching:
+   - Implement caching mechanisms to store frequently accessed product data, such as catalog information, to improve system performance.
+
+5. Messaging and Queuing System:
+   - Use a messaging and queuing system to handle events asynchronously, such as order processing, inventory updates, and notifications.
+
+6. Integration with Payment Gateway:
+   - Integrate with a secure payment gateway to process user payments securely and handle payment-related operations.
+
+7. Scalability and Load Balancing:
+   - Use load balancing techniques to distribute the incoming traffic evenly across multiple server instances to handle increased user load.
+   - Employ horizontal scaling by adding more server instances as the user base and transaction volume grows.
+
+8. Security:
+   - Implement security measures like SSL/TLS for secure communication, encryption of sensitive data, and protection against common security threats like cross-site scripting (XSS) and SQL injection.
+
+9. Monitoring and Analytics:
+   - Implement monitoring tools and analytics to track system performance, identify bottlenecks, and gain insights into user behavior.
+
+Remember that this is just a high-level overview of a low-level system design for an online shopping cart. In an interview, it is essential to dive deeper into each component, discuss possible challenges, optimizations, and trade-offs, and consider factors like data consistency, concurrency, and fault tolerance.
