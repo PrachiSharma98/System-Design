@@ -1,0 +1,170 @@
+import java.util.*;
+
+class ParkingLot {
+    private int capacity;
+    private Map<Integer, Vehicle> parkedVehicles;
+    private Map<Integer, Boolean> parkingSpaces;
+
+    public ParkingLot(int capacity) {
+        this.capacity = capacity;
+        this.parkedVehicles = new HashMap<>();
+        this.parkingSpaces = new HashMap<>();
+
+        for (int i = 1; i <= capacity; i++) {
+            parkingSpaces.put(i, true); // true indicates that the space is available
+        }
+    }
+
+    public Ticket parkVehicle(Vehicle vehicle) {
+        int parkingSpace = getAvailableSpace();
+        if (parkingSpace != -1) {
+            parkedVehicles.put(parkingSpace, vehicle);
+            parkingSpaces.put(parkingSpace, false); // Mark space as unavailable
+            return new Ticket(parkingSpace, vehicle);
+        }
+        return null; // No available parking space
+    }
+
+    public boolean exitVehicle(Ticket ticket) {
+        int parkingSpace = ticket.getParkingSpace();
+        if (parkedVehicles.containsKey(parkingSpace)) {
+            parkedVehicles.remove(parkingSpace);
+            parkingSpaces.put(parkingSpace, true); // Mark space as available
+            return true;
+        }
+        return false; // Invalid ticket or vehicle not found
+    }
+
+    public int getAvailableSpace() {
+        for (Map.Entry<Integer, Boolean> entry : parkingSpaces.entrySet()) {
+            if (entry.getValue()) {
+                return entry.getKey();
+            }
+        }
+        return -1; // No available parking space
+    }
+
+    public boolean isParkingSpaceAvailable() {
+        return parkedVehicles.size() < capacity;
+    }
+
+    public int getOccupiedSpaces() {
+        return parkedVehicles.size();
+    }
+}
+
+class Vehicle {
+    private String licensePlate;
+    private String make;
+    private String model;
+
+    public Vehicle(String licensePlate, String make, String model) {
+        this.licensePlate = licensePlate;
+        this.make = make;
+        this.model = model;
+    }
+
+    public String getLicensePlate() {
+        return licensePlate;
+    }
+
+    public String getMake() {
+        return make;
+    }
+
+    public String getModel() {
+        return model;
+    }
+}
+
+class Ticket {
+    private int parkingSpace;
+    private Vehicle vehicle;
+    private Date entryTime;
+    private Date exitTime;
+    private double totalCost;
+
+    public Ticket(int parkingSpace, Vehicle vehicle) {
+        this.parkingSpace = parkingSpace;
+        this.vehicle = vehicle;
+        this.entryTime = new Date();
+        this.totalCost = 0;
+    }
+
+    public int getParkingSpace() {
+        return parkingSpace;
+    }
+
+    public Vehicle getVehicle() {
+        return vehicle;
+    }
+
+    public Date getEntryTime() {
+        return entryTime;
+    }
+
+    public Date getExitTime() {
+        return exitTime;
+    }
+
+    public double getTotalCost() {
+        return totalCost;
+    }
+
+    public void setExitTime(Date exitTime) {
+        this.exitTime = exitTime;
+    }
+
+    public void calculateCost() {
+        long durationMillis = exitTime.getTime() - entryTime.getTime();
+        long durationHours = durationMillis / (60 * 60 * 1000);
+        totalCost = durationHours * 5; // Assume $5 per hour
+    }
+}
+
+class PaymentGateway {
+    public static boolean processPayment(Ticket ticket, double amount) {
+        // Process payment logic goes here
+        return true; // Assume payment always succeeds for demo purposes
+    }
+}
+
+public static void main(String[] args) {
+    ParkingLot parkingLot = new ParkingLot(10);
+
+    // Park a vehicle
+    Vehicle vehicle = new Vehicle("ABC123", "Toyota", "Camry");
+    Ticket ticket = parkingLot.parkVehicle(vehicle);
+    if (ticket != null) {
+        System.out.println("Vehicle parked. Parking space: " + ticket.getParkingSpace());
+    } else {
+        System.out.println("No available parking space.");
+    }
+
+    // Simulate some time passing
+    try {
+        Thread.sleep(5000); // Sleep for 5 seconds
+    } catch (InterruptedException e) {
+        e.printStackTrace();
+    }
+
+    // Exit the vehicle
+    Date exitTime = new Date();
+    ticket.setExitTime(exitTime);
+    ticket.calculateCost();
+    double totalCost = ticket.getTotalCost();
+
+    // Process payment
+    boolean paymentStatus = PaymentGateway.processPayment(ticket, totalCost);
+    if (paymentStatus) {
+        boolean success = parkingLot.exitVehicle(ticket);
+        if (success) {
+            System.out.println("Vehicle exited. Parking space: " + ticket.getParkingSpace());
+            System.out.println("Total cost: $" + totalCost);
+        } else {
+            System.out.println("Invalid ticket or vehicle not found.");
+        }
+    } else {
+        System.out.println("Payment failed. Please try again.");
+    }
+}
