@@ -1,0 +1,179 @@
+import java.io.*;
+import java.net.*;
+import java.util.*;
+
+class ChatServer {
+    private List<ClientHandler> clients;
+
+    public ChatServer() {
+        clients = new ArrayList<>();
+    }
+
+    public void start(int port) {
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Chat server started on port " + port);
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("New client connected: " + clientSocket);
+
+                ClientHandler client = new ClientHandler(clientSocket);
+                clients.add(client);
+                client.start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void broadcastMessage(String message, ClientHandler excludeClient) {
+        for (ClientHandler client : clients) {
+            if (client != excludeClient) {
+                client.sendMessage(message);
+            }
+        }
+    }
+
+    private class ClientHandler extends Thread {
+        private Socket clientSocket;
+        private BufferedReader reader;
+        private PrintWriter writer;
+
+        public ClientHandler(Socket clientSocket) {
+            this.clientSocket = clientSocket;
+        }
+
+        @Override
+        public void run() {
+            try {
+                reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+                writer = new PrintWriter(clientSocket.getOutputStream(), true);
+
+                String username = reader.readLine();
+                System.out.println("New user joined: " + username);
+
+                broadcastMessage(username + " has joined the chat.", this);
+
+                String message;
+                while ((message = reader.readLine()) != null) {
+                    System.out.println(username + ": " + message);
+                    broadcastMessage(username + ": " + message, this);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    clientSocket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        public void sendMessage(String message) {
+            writer.println(message);
+        }
+    }
+}
+
+class ChatClient {
+    public void connect(String serverAddress, int serverPort) {
+        try (Socket socket = new Socket(serverAddress, serverPort);
+             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader serverReader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
+            System.out.print("Enter your username: ");
+            String username = reader.readLine();
+            writer.println(username);
+
+            Thread serverListener = new Thread(() -> {
+                try {
+                    String message;
+                    while ((message = serverReader.readLine()) != null) {
+                        System.out.println(message);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            serverListener.start();
+
+            String message;
+            while ((message = reader.readLine()) != null) {
+                writer.println(message);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+public class RealTimeChatApplication {
+    public static void main(String[] args) {
+        int serverPort = 8080;
+
+        // Start the chat server
+        ChatServer chatServer = new ChatServer();
+        chatServer.start(serverPort);
+
+        // Connect a client to the chat server
+        ChatClient chatClient = new ChatClient();
+        chatClient.connect("localhost", serverPort);
+    }
+}
+Designing a real-time chat application involves various components and considerations. Here's a low-level design for a real-time chat application:
+
+1. User Management:
+   - Implement user authentication and authorization mechanisms for secure access to the chat application.
+   - Store user information such as username, password (hashed), email, and other relevant details.
+
+2. Chat Rooms:
+   - Create chat rooms or channels for users to join and participate in group conversations.
+   - Implement mechanisms for creating new chat rooms, joining existing rooms, and leaving rooms.
+   - Maintain a list of active chat rooms and their participants.
+
+3. Messaging:
+   - Design a message format that includes information such as sender, recipient(s), timestamp, and message content.
+   - Implement real-time message delivery between users within a chat room.
+   - Utilize WebSocket or a similar technology for bidirectional communication between clients and servers.
+   - Handle message routing and broadcasting to ensure all participants receive the messages in real-time.
+
+4. Message Persistence:
+   - Store chat messages persistently for offline access and historical reference.
+   - Choose an appropriate database system to store and retrieve chat messages efficiently.
+   - Implement data partitioning/sharding techniques to handle large volumes of messages.
+
+5. Message Encryption:
+   - Implement end-to-end encryption to ensure secure communication between users.
+   - Utilize encryption algorithms and key management practices to protect message content from unauthorized access.
+
+6. Presence and Status:
+   - Track user presence and status information to indicate whether users are online, offline, or idle.
+   - Implement mechanisms for users to view the presence and status of other participants in the chat room.
+
+7. Notifications:
+   - Notify users of new messages, chat room invitations, or other relevant events.
+   - Implement push notifications or real-time updates to inform users about activity in the chat application.
+
+8. Emojis and Rich Text:
+   - Allow users to send emojis, format messages, and include attachments like images or files.
+   - Design a system to handle rich text formatting and display emojis in the chat interface.
+
+9. User Blocking and Reporting:
+   - Implement features to allow users to block or report abusive or inappropriate behavior.
+   - Handle user blocking by preventing blocked users from sending messages or interacting with each other.
+
+10. User Search and Contacts:
+    - Enable users to search for other users and add them as contacts or friends.
+    - Implement a contact management system to maintain user relationships and facilitate private conversations.
+
+11. Scalability and Load Balancing:
+    - Distribute user data and chat messages across multiple servers for scalability.
+    - Use load balancing techniques to evenly distribute user connections and message traffic.
+    - Scale the system horizontally by adding more servers as the user base and chat activity grow.
+
+12. Monitoring and Analytics:
+    - Implement monitoring tools and analytics to track system performance, usage patterns, and user behavior.
+    - Monitor server health, network throughput, and user activity to identify and resolve issues promptly.
+
+Remember, this is a high-level overview of a low-level system design for a real-time chat application. In practice, you would need to delve deeper into each component, consider fault tolerance, data consistency, message ordering, security measures, and handle edge cases to build a robust and scalable chat application.
