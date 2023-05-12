@@ -134,3 +134,86 @@ public class OnlineShoppingCartSystem {
    - Implement monitoring tools and analytics to track system performance, identify bottlenecks, and gain insights into user behavior.
 
 Remember that this is just a high-level overview of a low-level system design for an online shopping cart. In an interview, it is essential to dive deeper into each component, discuss possible challenges, optimizations, and trade-offs, and consider factors like data consistency, concurrency, and fault tolerance.
+import java.util.*;
+
+// Product and ShoppingCart classes remain the same
+
+// Define the Observer interface for messaging
+interface CartObserver {
+    void update(CartItem item);
+}
+
+// Concrete implementation of CartObserver
+class MessagingSystem implements CartObserver {
+    @Override
+    public void update(CartItem item) {
+        System.out.println("Messaging: Item added to cart - " + item.getProduct().getName());
+    }
+}
+
+class ShoppingCart {
+    private List<CartItem> items;
+    private List<CartObserver> observers;
+
+    public ShoppingCart() {
+        items = new ArrayList<>();
+        observers = new ArrayList<>();
+    }
+
+    public void addItem(Product product, int quantity) {
+        for (CartItem item : items) {
+            if (item.getProduct().getId().equals(product.getId())) {
+                item.setQuantity(item.getQuantity() + quantity);
+                notifyObservers(item);
+                return;
+            }
+        }
+        CartItem newItem = new CartItem(product, quantity);
+        items.add(newItem);
+        notifyObservers(newItem);
+    }
+
+    // ... Rest of the code remains the same
+
+    public void addObserver(CartObserver observer) {
+        observers.add(observer);
+    }
+
+    public void removeObserver(CartObserver observer) {
+        observers.remove(observer);
+    }
+
+    private void notifyObservers(CartItem item) {
+        for (CartObserver observer : observers) {
+            observer.update(item);
+        }
+    }
+}
+
+public class OnlineShoppingCartSystem {
+    public static void main(String[] args) {
+        // Create some sample products
+        Product product1 = new Product("1", "Product 1", 9.99);
+        Product product2 = new Product("2", "Product 2", 19.99);
+
+        // Create a shopping cart
+        ShoppingCart cart = new ShoppingCart();
+
+        // Add a messaging observer to the cart
+        CartObserver messagingSystem = new MessagingSystem();
+        cart.addObserver(messagingSystem);
+
+        // Add items to the cart
+        cart.addItem(product1, 2); // Will trigger the messaging system to notify
+        cart.addItem(product2, 1);
+
+        // Display the cart
+        cart.displayCart();
+
+        // Remove an item from the cart
+        cart.removeItem("1");
+
+        // Display the updated cart
+        cart.displayCart();
+    }
+}
